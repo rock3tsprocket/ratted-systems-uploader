@@ -33,7 +33,12 @@ def upload_file():
     print(f'Uploading {args.upload}...')
     upload = requests.post('https://ratted.systems/upload/new', headers=header, files=file)
     if upload.status_code == 200:
-        print(f'{args.upload} has been uploaded successfully! Run emiserver.py --list to see the file\'s link.') # because i can't be bothered to make this thing tell you it
+        # Grabbing the link 
+        resource = upload.json()["resource"]
+        os.putenv('LINK', resource)
+        LINK = os.getenv('LINK')
+
+        print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
         sys.exit(0)
     else:
         print(f'{filename} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
@@ -42,7 +47,7 @@ def upload_file():
 # Deleting a file
 def delete_file():
     print(f'Deleting {args.delete}...')
-    delete = requests.post('https://ratted.systems/api/v1/upload/modify-upload', headers={'Authorization': token, 'Content-Type': 'application/json'}, data=json.dumps({'action': 'delete', 'uploadId': args.delete}))
+    delete = requests.post('https://ratted.systems/api/v1/upload/modify-upload', headers=header, data=json.dumps({'action': 'delete', 'uploadId': args.delete}))
     if delete.status_code == 200:
         print(f'{args.delete} has been deleted successfully!')
     else:
@@ -56,13 +61,13 @@ def list_files():
     if pages.status_code == 200:
         while True:
             total_pages = pages.json()["totalPages"]
-            page = input(f'You currently have {total_pages} page(s) of uploads. Which page do you want to view?\n')
+            page = input(f'You currently have {total_pages} page(s) of uploads. Which page do you want to view? \nPage to view: ')
             if not page.isdecimal() or int(page) > total_pages:
                 print('Invalid selection, try again.')
             else:
                 break
         print("Image List:")
-        the_list = requests.get(f'https://ratted.systems/api/v1/upload/fetch-uploads?page={page}', headers=header)
+        the_list = requests.get(f'https://ratted.systems/api/v1/upload/fetch-uploads?page={page}', headers=header) # request 2
         print(json.dumps(the_list.json(), sort_keys=True, indent=4))
     else:
         print(f'Failed to list images! HTTP status code: {pages.status_code}, JSON response: {pages.json()}')
