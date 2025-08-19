@@ -24,6 +24,7 @@ parser = argparse.ArgumentParser(description='Uploads a file to EmiServer withou
 parser.add_argument('--upload', help='[PATH]')
 parser.add_argument('--delete', help='[FileName (NOT OriginalFileName)]')
 parser.add_argument('--list', action='store_true')
+parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
 # Uploading a file
@@ -35,10 +36,10 @@ def upload_file():
     if upload.status_code == 200:
         # Grabbing the link 
         resource = upload.json()["resource"]
-        os.putenv('LINK', resource)
-        LINK = os.getenv('LINK')
-
-        print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
+        if '/tmp/' in args.upload:
+            os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a>\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
+        else:
+            print(f'{args.upload} has {os.getcwd()} been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
         sys.exit(0)
     else:
         print(f'{filename} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
@@ -56,11 +57,13 @@ def delete_file():
 
 # Listing files
 def list_files():
-    header = { "Authorization": token }
     pages = requests.get('https://ratted.systems/api/v1/upload/fetch-uploads?page=1', headers=header) # we're doing the request twice because i don't know how else to do it (request 1)
     if pages.status_code == 200:
         while True:
             total_pages = pages.json()["totalPages"]
+            if total_pages == 1:
+                page = 1
+                break
             page = input(f'You currently have {total_pages} page(s) of uploads. Which page do you want to view? \nPage to view: ')
             if not page.isdecimal() or int(page) > total_pages:
                 print('Invalid selection, try again.')
