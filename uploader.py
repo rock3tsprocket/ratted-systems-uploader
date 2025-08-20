@@ -45,7 +45,7 @@ def upload_file():
             # congratulations your screenshot was uploaded yipee i can't be bothered to add a case for if it failed
             os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a>\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
         else:
-            print(f'{args.upload} has {os.getcwd()} been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
+            print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
         sys.exit(0)
     else:
         print(f'{filename} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
