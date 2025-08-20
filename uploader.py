@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 import json
-#import pyperclip
+import pyperclip
 from dotenv import load_dotenv
 
 # Importing token from .env
@@ -39,8 +39,8 @@ def upload_file():
         resource = upload.json()["resource"]
         # Checking if the script is being ran through xfce4-screenshooter (may only work with Xfce ~4.20 due to the use of Zenity)
         if '/tmp/' in args.upload:
-            # Put link in clipboard (broken right now)
-            #pyperclip.copy(str(resource))
+            # Put link in clipboard
+            pyperclip.copy(str(resource))
 
             # congratulations your screenshot was uploaded yipee i can't be bothered to add a case for if it failed
             os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a>\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
