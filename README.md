@@ -11,9 +11,6 @@ This Python script lets you upload to https://ratted.systems without using Share
 
 * Upload a file with `./uploader.py --upload [PATH]`.
 
-
-* Delete a file that you have uploaded with `./uploader.py --delete [FileName (NOT OriginalFileName in the list)]`.
-
 # Xfce Screenshooter integration (requires Zenity):
 
 1. Open xfce4-screenshooter (for example, by pressing Print Screen) and click "Preferences".
