@@ -24,7 +24,7 @@ if not token:
 parser = argparse.ArgumentParser(description='Uploads a file to EmiServer without relying on ShareX or the web client.', epilog='shoutout to https://ratted.systems', add_help=True)
 parser.add_argument('--upload', help='[PATH]')
 parser.add_argument('--delete', help='[FileName (NOT OriginalFileName)]')
-parser.add_argument('--list', action='store_true')
+#parser.add_argument('--list', action='store_true')
 parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
@@ -62,25 +62,25 @@ def delete_file():
     sys.exit(0)
 
 # Listing files
-def list_files():
-    pages = requests.get('https://ratted.systems/api/v1/upload/fetch-uploads?page=1', headers=header) # we're doing the request twice because i don't know how else to do it (request 1)
-    if pages.status_code == 200:
-        while True:
-            total_pages = pages.json()["totalPages"]
-            if total_pages == 1:
-                page = 1
-                break
-            page = input(f'You currently have {total_pages} page(s) of uploads. Which page do you want to view? \nPage to view: ')
-            if not page.isdecimal() or int(page) > total_pages:
-                print('Invalid selection, try again.')
-            else:
-                break
-        print("Image List:")
-        the_list = requests.get(f'https://ratted.systems/api/v1/upload/fetch-uploads?page={page}', headers=header) # request 2
-        print(json.dumps(the_list.json(), sort_keys=True, indent=4))
-    else:
-        print(f'Failed to list images! HTTP status code: {pages.status_code}, JSON response: {pages.json()}')
-        sys.exit(1)
+#def list_files():
+#    pages = requests.get('https://ratted.systems/api/v1/upload/fetch-uploads?page=1', headers=header) # we're doing the request twice because i don't know how else to do it (request 1)
+#    if pages.status_code == 200:
+#        while True:
+#            total_pages = pages.json()["totalPages"]
+#            if total_pages == 1:
+#                page = 1
+#                break
+#            page = input(f'You currently have {total_pages} page(s) of uploads. Which page do you want to view? \nPage to view: ')
+#            if not page.isdecimal() or int(page) > total_pages:
+#                print('Invalid selection, try again.')
+#            else:
+#                break
+#        print("Image List:")
+#        the_list = requests.get(f'https://ratted.systems/api/v1/upload/fetch-uploads?page={page}', headers=header) # request 2
+#        print(json.dumps(the_list.json(), sort_keys=True, indent=4))
+#    else:
+#        print(f'Failed to list images! HTTP status code: {pages.status_code}, JSON response: {pages.json()}')
+#        sys.exit(1)
 # Interpreting uploading a file
 if args.upload:
     upload_file()
