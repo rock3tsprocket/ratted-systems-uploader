@@ -89,12 +89,12 @@ if args.upload:
     upload_file()
 
 # Interpreting deleting a file
-elif args.delete:
-    delete_file()
+#elif args.delete:
+#    delete_file()
 
 # Interpreting listing a file
-elif args.list:
-    list_files()
+#elif args.list:
+#    list_files()
 
 # Help if no arguments are present
 else:
