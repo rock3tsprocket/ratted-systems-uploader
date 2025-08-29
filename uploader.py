@@ -20,7 +20,7 @@ header = { 'Authorization': token }
 motd = requests.get('https://ratted.systems/api/v1/upload/motd')
 
 if not token:
-    print('No token found! Please create a file named \'.env\' and write \'token=[YOUR DISCORD TOKEN]\' in it!')
+    print('No token found! Please create a file named \'.env\' and write \'token=[ratted.systems upload key]\' in it!')
     sys.exit(1)
 
 # Argument parsing
