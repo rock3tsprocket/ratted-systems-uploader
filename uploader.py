@@ -28,7 +28,6 @@ parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.s
 parser.add_argument('--upload', help='[PATH]')
 #parser.add_argument('--delete', help='[FileName (NOT OriginalFileName)]')
 #parser.add_argument('--list', action='store_true')
-parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
 # Uploading a file
