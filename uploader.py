@@ -24,7 +24,7 @@ if not token:
     sys.exit(1)
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=motd.json()['motd'], add_help=True)
+parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd.json()['motd']}", add_help=True)
 parser.add_argument('--upload', help='[PATH]')
 #parser.add_argument('--delete', help='[FileName (NOT OriginalFileName)]')
 #parser.add_argument('--list', action='store_true')
