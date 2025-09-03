@@ -50,7 +50,7 @@ def upload_file():
             print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
         sys.exit(0)
     else:
-        print(f'{filename} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
+        print(f'{args.upload} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
         sys.exit(1)
 
 # Deleting a file
