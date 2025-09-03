@@ -39,12 +39,13 @@ def upload_file():
     if upload.status_code == 200:
         # Grabbing the link 
         resource = upload.json()["resource"]
-        # Checking if the script is being ran through xfce4-screenshooter (may only work with Xfce ~4.20 due to the use of Zenity)
+        # Checking if the script is being ran through xfce4-screenshooter
         if '/tmp/' in args.upload:
             # Put link in clipboard
             pyperclip.copy(str(resource))
 
             # congratulations your screenshot was uploaded yipee i can't be bothered to add a case for if it failed
+            # also this requires Zenity
             os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a> (has been copied to clipboard)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
         else:
             print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
