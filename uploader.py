@@ -6,26 +6,29 @@ import argparse
 import os
 import sys
 import json
-import pyperclip
-from dotenv import load_dotenv
+if "pyperclip" in sys.modules: import pyperclip;
 
-# Importing token from .env
-load_dotenv()
-token = os.getenv('token')
+# Importing upload key from uploadkey.json
+try:
+    with open(f"{os.path.dirname(os.path.realpath(__file__))}/config.json", "r") as a:
+        global key
+        key = json.loads(a.read().strip())["uploadkey"]
+except FileNotFoundError as oops:
+    print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
+    sys.exit(1)
 
 # Defining the header for HTTP requests
-header = { 'Authorization': token }
-
+header = { 'Authorization': key }
 # Message of the day
 motd = requests.get('https://ratted.systems/api/v1/upload/motd')
 
-if not token:
-    print('No token found! Please create a file named \'.env\' and write \'token=[ratted.systems upload key]\' in it!')
+if not key:
+    print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
     sys.exit(1)
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd.json()['motd']}", add_help=True)
-parser.add_argument('--upload', help='[PATH]')
+parser.add_argument('--upload', help='[PATH TO FILE]')
 #parser.add_argument('--delete', help='[FileName (NOT OriginalFileName)]')
 #parser.add_argument('--list', action='store_true')
 args = parser.parse_args()
@@ -36,17 +39,18 @@ def upload_file():
     
     print(f'Uploading {args.upload}...')
     upload = requests.post('https://ratted.systems/upload/new', headers=header, files=file)
+    print(header)
     if upload.status_code == 200:
         # Grabbing the link 
         resource = upload.json()["resource"]
         # Checking if the script is being ran through xfce4-screenshooter
         if '/tmp/' in args.upload:
             # Put link in clipboard
-            pyperclip.copy(str(resource))
+            if "pyperclip" in sys.modules: pyperclip.copy(str(resource));
 
             # congratulations your screenshot was uploaded yipee i can't be bothered to add a case for if it failed
-            # also this requires Zenity
-            os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a> (has been copied to clipboard)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
+            # also this requires Zenity so uhh
+            os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a> (has been copied to clipboard if you installed pyperclip)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
         else:
             print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
         sys.exit(0)
