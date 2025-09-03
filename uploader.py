@@ -6,7 +6,8 @@ import argparse
 import os
 import sys
 import json
-if "pyperclip" in sys.modules: import pyperclip;
+try: import pyperclip;
+except: pass;
 
 # Importing upload key from uploadkey.json
 try:
