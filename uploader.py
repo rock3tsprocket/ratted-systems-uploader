@@ -43,13 +43,8 @@ def upload_file():
     # Grabbing the link 
     resource = upload.json()["resource"]
     # Checking if the script is being ran through xfce4-screenshooter
-    if not args.upload.startswith('/tmp'):
-        print(args.upload, 'has been uploaded successfully! \nLink to file: '+resource+'\nYou can delete the file at https://ratted.systems/upload/panel/list.')
-        sys.exit(0)
-
-    # this requires Zenity
-    os.system("zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='"+resource+"'>"+resource+"</a> (has been copied to clipboard if you installed pyperclip)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
-
+    print(args.upload, 'has been uploaded successfully! \nLink to file: '+resource+'\nYou can delete the file at https://ratted.systems/upload/panel/list.')
+    sys.exit(0)
 
 if args.upload:
     upload_file()
