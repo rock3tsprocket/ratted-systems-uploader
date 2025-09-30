@@ -13,7 +13,7 @@ try:
         global key
         key = json.loads(a.read().strip())["uploadkey"]
 except FileNotFoundError as oops:
-    print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
+    print('No upload key found! Please create a file named \'config.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
     sys.exit(1)
 
 # Defining the header for HTTP requests
@@ -22,7 +22,7 @@ header = { 'Authorization': key }
 motd = requests.get('https://ratted.systems/api/v1/upload/motd')
 
 if not key:
-    print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
+    print('No upload key found! Please create a file named \'config.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
     sys.exit(1)
 
 # Argument parsing
