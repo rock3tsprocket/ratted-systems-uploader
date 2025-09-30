@@ -6,6 +6,11 @@ import argparse
 import os
 import sys
 import json
+import websockets
+import asyncio
+import re
+import hashlib
+from codecs import encode
 
 # Getting upload key from uploadkey.json
 try:
@@ -27,7 +32,8 @@ if not key:
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd.json()['motd']}", add_help=True)
-parser.add_argument('--upload', help='[PATH TO FILE]')
+parser.add_argument('--upload', metavar='[file]', help="Upload a file over HTTPS.")
+parser.add_argument('--uploadws', metavar='[file]', help="Upload a file over WebSockets.")
 args = parser.parse_args()
 
 # Uploading a file
@@ -51,8 +57,79 @@ def upload_file():
     os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a> (has been copied to clipboard if you installed pyperclip)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
 
 
+async def solvePoW(challenge, difficulty):
+    nonce = 0
+    TARGET_PREFIX = "0"*difficulty
+    def sha256(theinput):
+        return hashlib.sha256(theinput.encode()).hexdigest()
+
+    async def findNonce():
+        nonce = 0
+        while True:
+            HASH = sha256(challenge+str(nonce))
+            if HASH.startswith(TARGET_PREFIX):
+                return nonce
+            nonce=nonce+1
+            print(HASH)
+    await findNonce()
+                    
+def onmessage(optype, callback):
+    if callable(optype):
+        callback = optype
+        optype = '*'
+
+
+async def uploadwebsocket():
+    def issuccess(message):
+        return message and message.data and message.data.success
+
+    filename = re.sub(r'.*?/', '', args.uploadws)
+    filesize = os.path.getsize(args.uploadws)
+    print("Connecting to ratted.systems over WebSockets...")
+    # Connecting over WebSockets
+    async with websockets.connect('wss://ratted.systems/api/v1/discord/socket') as upload:
+        await upload.send(json.dumps({"op": "auth", "data": key}))
+        
+        print("Requesting PoW challenge.")
+        try:
+            challengeresponse = await asyncio.wait_for(upload.recv("pow_challenge"), 15000)
+            print(challengeresponse)
+            
+        except TimeoutError:
+            print("PoW challenge timeout")
+
+        CHALLENGE = challengeresponse.challenge
+        DIFFICULTY = challengeresponse.difficulty
+        NONCE = await solvePoW(CHALLENGE, DIFFICULTY)
+        
+        print(f"PoW solved: {nonce}")
+        await upload.send(f"pow_solution", json.dumps({ NONCE }))
+
+        print(f"Sending file: {filename}")
+
+        RESULT = await asyncio.wait_for(await upload.recv("start_upload"), 15000)
+        data = RESULT.data
+        CHUNKSIZE = data.chunkSize or 1024**2
+        
+        if not issuccess(RESULT):
+            print(f"Failed to start upload: {result}")
+            
+        UPLOADTOKEN = data.oneTimeUploadToken
+
+        FILEHASH = "no"
+        
+        HEADER = f"FILEUPLOAD_{UPLOADTOKEN}||FILEHASH>>"
+        print(f"Sending header: {HEADER}")
+        await upload.send(HEADER.encode())
+
+        offset = 0
+
+        
+
 if args.upload:
     upload_file()
+elif args.uploadws:
+    asyncio.run(uploadwebsocket())
 
 # Help if no arguments are present
 else:
