@@ -8,5 +8,5 @@ This is a rewrite of ratted-systems-uploader that took me some time (and externa
 
 ## Notes:
 - I can't be bothered to clean up the output right now.
-- You most likely need to build the software yourself, but I will be providing statically linked AArch64 builds built on Android.
+- You need to build the software yourself.
 - Any platform other than aarch64-unknown-linux-android is tested. If you want to build on a platform other than that, good luck.
