@@ -3,7 +3,7 @@ This is a rewrite of ratted-systems-uploader that took me some time (and externa
 
 ## How to use:
 0. Build ratted-systems-uploader ([Build instructions](./BUILD.md))
-1. Replace the contents of `example.token` with your Ratted Systems upload key.
+1. Replace the contents of `example.token` with your Ratted Systems upload key and rename the file to `.token`.
 2. To use the software, run `./uploader [file path]`.
 
 ## Notes:
