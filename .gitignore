@@ -1,3 +1,6 @@
 .token
 uploader
-
+uploader.o
+Makefile
+config.status
+autom4te.cache
