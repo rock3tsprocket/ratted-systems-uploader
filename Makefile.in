@@ -1,0 +1,12 @@
+CC=@CC@
+LDFLAGS=@LDFLAGS@
+CFLAGS=@CFLAGS@
+
+build:
+	$(CC) $(CFLAGS) uploader.c -o uploader $(LDFLAGS)
+
+clean:
+	rm -f uploader.o uploader
+
+distclean:
+	rm -f Makefile config.log uploader uploader.o config.status
