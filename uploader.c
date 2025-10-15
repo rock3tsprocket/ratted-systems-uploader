@@ -8,7 +8,7 @@ int upload(char conts[7], char *filename[], long int filesize) {
 	FILE *fptrtoken;
 	fptrtoken = fopen(".token", "r");
 	if (fptrtoken == NULL) {
-		printf("Please make a file named .token and put your upload token in it!\n");
+		fprintf(stderr, "Please make a file named .token and put your upload token in it!\n");
 		return 1;
 	}
 	char token[33];
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	FILE *fptr;
 	fptr = fopen(argv[1], "rb");
 	if (fptr == NULL) {
-		printf("No file has been specified!\n");
+		fprintf(stderr, "File not found, please specify a file that exists!\n");
 		return 1;
 	}
 	
