@@ -7,6 +7,10 @@ int upload(char conts[7], char *filename[], long int filesize) {
 	/* Reading token file */
 	FILE *fptrtoken;
 	fptrtoken = fopen(".token", "r");
+	if (fptrtoken == NULL) {
+		printf("Please make a file named .token and put your upload token in it!\n");
+		return 1;
+	}
 	char token[33];
 	fgets(token, 33, fptrtoken);
 	fclose(fptrtoken);
@@ -67,6 +71,10 @@ int main(int argc, char *argv[]) {
 	/* Initializing file pointer and opening specified file */
 	FILE *fptr;
 	fptr = fopen(argv[1], "rb");
+	if (fptr == NULL) {
+		printf("No file has been specified!\n");
+		return 1;
+	}
 	
 	/* Checking file size and storing it in a variable */
 	fseek(fptr, 0L, SEEK_END);
