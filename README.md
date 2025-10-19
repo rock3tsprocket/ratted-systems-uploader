@@ -1,3 +1,7 @@
+> [!NOTE]  
+> This branch is no longer being maintained now that it has been merged into `master`.
+> Don't use it unless you know what you're doing.
+
 # Set-up:
 
 1. Clone this repository (`git clone https://github.com/rock3tsprocket/ratted-systems-uploader`).
