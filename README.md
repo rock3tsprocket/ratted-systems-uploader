@@ -7,7 +7,9 @@
 
 # How to use:
 
-* Upload a file with `./uploader.py --upload [PATH]`.
+* Upload a file over HTTPS with `./uploader.py --upload [PATH]`.
+* Upload a file over WebSockets with `./uploader.py --uploadws [PATH]`.
+* Get verbose output out of `--uploadws` with the `-v` or `--verbose` arguments.
 
 # Xfce Screenshooter integration (requires Zenity):
 
