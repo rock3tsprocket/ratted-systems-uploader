@@ -24,7 +24,7 @@ except FileNotFoundError as oops:
 # Defining the header for HTTP requests
 header = { 'Authorization': key }
 
-motd = { "motd": "placeholder because i don't want to spam the server" } #requests.get('https://ratted.systems/api/v1/upload/motd')
+motd = requests.get('https://ratted.systems/api/v1/upload/motd')
 
 if not key:
     print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
@@ -32,7 +32,7 @@ if not key:
 
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd['motd']}", add_help=True)
+parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd.json()['motd']}", add_help=True)
 parser.add_argument('--upload', metavar='[file]', help="Upload a file over HTTPS.")
 parser.add_argument('--uploadws', metavar='[file]', help="Upload a file over WebSockets.")
 parser.add_argument('-v', '--verbose', action='store_true')
