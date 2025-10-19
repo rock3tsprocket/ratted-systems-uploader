@@ -4,13 +4,11 @@
 import requests
 import argparse
 import os
-import sys
 import json
 import websockets
 import asyncio
 import re
 import hashlib
-import time
 from codecs import encode
 
 # Getting upload key from uploadkey.json
@@ -20,7 +18,7 @@ try:
         key = json.loads(a.read().strip())["uploadkey"]
 except FileNotFoundError as oops:
     print('No upload key found! Please create a file named \'config.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
-    sys.exit(1)
+    exit(1)
 
 # Defining the header for HTTP requests
 header = { 'Authorization': key }
@@ -29,7 +27,7 @@ motd = { "motd": "placeholder because i don't want to spam the server" } #reques
 
 if not key:
     print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
-    sys.exit(1)
+    exit(1)
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd['motd']}", add_help=True)
@@ -46,14 +44,14 @@ def upload_file():
     upload = requests.post('https://ratted.systems/upload/new', headers=header, files=file)
     if not upload.status_code == 200:
         print(f'{args.upload} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
-        sys.exit(1)
+        exit(1)
 
     # Grabbing the link 
     resource = upload.json()["resource"]
     # Checking if the script is being ran through xfce4-screenshooter
     if not args.upload.startswith('/tmp'):
         print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
-        sys.exit(0)
+        exit(0)
 
     # this requires Zenity
     os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a> (has been copied to clipboard if you installed pyperclip)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
