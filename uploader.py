@@ -10,6 +10,7 @@ import websockets
 import asyncio
 import re
 import hashlib
+import time
 from codecs import encode
 
 # Getting upload key from uploadkey.json
@@ -24,16 +25,17 @@ except FileNotFoundError as oops:
 # Defining the header for HTTP requests
 header = { 'Authorization': key }
 
-motd = requests.get('https://ratted.systems/api/v1/upload/motd')
+motd = { "motd": "placeholder because i don't want to spam the server" } #requests.get('https://ratted.systems/api/v1/upload/motd')
 
 if not key:
     print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
     sys.exit(1)
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd.json()['motd']}", add_help=True)
+parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd['motd']}", add_help=True)
 parser.add_argument('--upload', metavar='[file]', help="Upload a file over HTTPS.")
 parser.add_argument('--uploadws', metavar='[file]', help="Upload a file over WebSockets.")
+parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
 
 # Uploading a file
@@ -64,67 +66,109 @@ async def solvePoW(challenge, difficulty):
         return hashlib.sha256(theinput.encode()).hexdigest()
 
     async def findNonce():
+        TARGET_PREFIX = "0"*difficulty
+        global nonce
         nonce = 0
         while True:
             HASH = sha256(challenge+str(nonce))
             if HASH.startswith(TARGET_PREFIX):
                 return nonce
-            nonce=nonce+1
-            print(HASH)
+            nonce+=1
     await findNonce()
                     
-def onmessage(optype, callback):
-    if callable(optype):
-        callback = optype
-        optype = '*'
-
-
 async def uploadwebsocket():
-    def issuccess(message):
-        return message and message.data and message.data.success
+    async def readnextchunk(offset, chunksize):
+        global Offset
+        # :sob:
+        Offset = offset
+        global CHUNKSIZE
+        CHUNKSIZE = chunksize
+        with open(args.uploadws, "rb") as file:
+            SLICE = file.read()[Offset:Offset+CHUNKSIZE]
+            file.seek(Offset)
 
+            await upload.send(SLICE)
+            
+            # i don't think this works
+            #print(f"Sent file chunk: {offset}\n")
+            #print(f"\033[F\r\033[K{round(offset/filesize)*100}%")
+            
+            Offset+=CHUNKSIZE
+            try:
+                request_next_chunk = await asyncio.wait_for(upload.recv(), 120000)
+            except (TimeoutError, websockets.exceptions.ConnectionClosedOK):
+                pass
+
+    
     filename = re.sub(r'.*?/', '', args.uploadws)
     filesize = os.path.getsize(args.uploadws)
+
     print("Connecting to ratted.systems over WebSockets...")
+    
     # Connecting over WebSockets
     async with websockets.connect('wss://ratted.systems/api/v1/discord/socket') as upload:
-        await upload.send(json.dumps({"op": "auth", "data": key}))
-        
+        await upload.send(json.dumps({"op": "auth",
+                                      "data": key}))
+        auth = await upload.recv()
+        print(auth) if args.verbose else None
+        await upload.send(json.dumps({"op": "start_upload",
+                                      "data": {
+                                          "fileName": str(filename),
+                                          "fileSize": int(filesize)}
+                                      }))
         print("Requesting PoW challenge.")
         try:
-            challengeresponse = await asyncio.wait_for(upload.recv("pow_challenge"), 15000)
-            print(challengeresponse)
+            challengeresponse = await asyncio.wait_for(upload.recv(), 15000)
+            print(challengeresponse) if args.verbose else None
             
         except TimeoutError:
             print("PoW challenge timeout")
 
-        CHALLENGE = challengeresponse.challenge
-        DIFFICULTY = challengeresponse.difficulty
-        NONCE = await solvePoW(CHALLENGE, DIFFICULTY)
-        
-        print(f"PoW solved: {nonce}")
-        await upload.send(f"pow_solution", json.dumps({ NONCE }))
+
+        CHALLENGE = json.loads(challengeresponse)["data"]["challenge"]
+        DIFFICULTY = json.loads(challengeresponse)["data"]["difficulty"]
+        await solvePoW(CHALLENGE, DIFFICULTY)
+        print(f"PoW solved: {nonce}") if args.verbose else None
+        await upload.send(json.dumps({
+            "op": "pow_solution",
+            "data": {
+                "nonce": nonce
+                }
+            }))
 
         print(f"Sending file: {filename}")
 
-        RESULT = await asyncio.wait_for(await upload.recv("start_upload"), 15000)
-        data = RESULT.data
-        CHUNKSIZE = data.chunkSize or 1024**2
+        RESULT = await asyncio.wait_for(upload.recv(), 15000)
+        print(RESULT) if args.verbose else None
+        data = json.loads(RESULT)["data"]
+        CHUNKSIZE = data["chunkSize"] or 1024*1024
         
-        if not issuccess(RESULT):
-            print(f"Failed to start upload: {result}")
-            
-        UPLOADTOKEN = data.oneTimeUploadToken
+        UPLOADTOKEN = data["oneTimeUploadToken"]
 
-        FILEHASH = "no"
-        
-        HEADER = f"FILEUPLOAD_{UPLOADTOKEN}||FILEHASH>>"
-        print(f"Sending header: {HEADER}")
+        HEADER = f"FILEUPLOAD_{UPLOADTOKEN}||no>>"
+        print(f"Sending header: {HEADER}") if args.verbose else None
         await upload.send(HEADER.encode())
 
-        offset = 0
+        Offset = 0
+        """try:
+            while Offset < filesize:
+                await readnextchunk(Offset, filesize)
+            upload_complete = await asyncio.wait_for(upload.recv(), 30000)
+            upload_complete = json.loads(upload_complete)
+        except websockets.exceptions.ConnectionClosedOK:
+            print(f"File uploaded successfully!\nLink:{upload_complete["uploadLink"]}")"""
 
-        
+        while Offset < filesize:
+            try:
+                await readnextchunk(Offset, filesize)
+                Offset+=CHUNKSIZE
+            except websockets.exceptions.ConnectionClosedOK:
+                pass
+
+        upload_complete = json.loads(await asyncio.wait_for(upload.recv(), 30000))
+        await upload.send(json.dumps({"op": "ping", "data": {}}))
+        print(f"File uploaded successfully!\nLink: {upload_complete["data"]["uploadLink"]}")
+        print(upload_complete) if args.verbose else None
 
 if args.upload:
     upload_file()
