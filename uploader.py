@@ -20,6 +20,7 @@ except FileNotFoundError as oops:
     print('No upload key found! Please create a file named \'config.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
     exit(1)
 
+
 # Defining the header for HTTP requests
 header = { 'Authorization': key }
 
@@ -28,6 +29,7 @@ motd = { "motd": "placeholder because i don't want to spam the server" } #reques
 if not key:
     print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
     exit(1)
+
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd['motd']}", add_help=True)
