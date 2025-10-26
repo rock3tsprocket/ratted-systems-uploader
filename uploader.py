@@ -52,7 +52,7 @@ def upload_file():
     resource = upload.json()["resource"]
     # Checking if the script is being ran through xfce4-screenshooter
     if not args.upload.startswith('/tmp'):
-        print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panel/list.')
+        print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panelv2#file-manager.')
         exit(0)
 
     # this requires Zenity
@@ -150,14 +150,6 @@ async def uploadwebsocket():
         await upload.send(HEADER.encode())
 
         Offset = 0
-        """try:
-            while Offset < filesize:
-                await readnextchunk(Offset, filesize)
-            upload_complete = await asyncio.wait_for(upload.recv(), 30000)
-            upload_complete = json.loads(upload_complete)
-        except websockets.exceptions.ConnectionClosedOK:
-            print(f"File uploaded successfully!\nLink:{upload_complete["uploadLink"]}")"""
-
         while Offset < filesize:
             try:
                 await readnextchunk(Offset, filesize)
@@ -167,7 +159,7 @@ async def uploadwebsocket():
 
         upload_complete = json.loads(await asyncio.wait_for(upload.recv(), 30000))
         await upload.send(json.dumps({"op": "ping", "data": {}}))
-        print(f"File uploaded successfully!\nLink: {upload_complete["data"]["uploadLink"]}")
+        print(f"File uploaded successfully!\nLink: {upload_complete["data"]["uploadLink"]}\nYou can delete the file at https://ratted.systems/upload/panelv2/#file-manager.")
         print(upload_complete) if args.verbose else None
 
 if args.upload:
