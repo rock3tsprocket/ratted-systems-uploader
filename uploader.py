@@ -17,7 +17,7 @@ motd = requests.get('https://ratted.systems/api/v1/upload/motd')
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd.json()['motd']}", add_help=True)
-parser.add_argument('-U', '--upload', metavar='[file]', help="Upload a file over HTTPS.")
+parser.add_argument('-U', '--upload', metavar='[file]', help="Upload a file (over WebSockets if file is > 100MB, otherwise HTTPS).")
 parser.add_argument('--uploadws', metavar='[file]', help="Upload a file over WebSockets.")
 parser.add_argument('-v', '--verbose', action='store_true', help="Get verbose output from --uploadws")
 parser.add_argument('--uploadkey', action='store_true', help="Set upload key")
@@ -50,23 +50,23 @@ def douploadkeythings(whattodo):
 
 
 # Uploading a file
-def upload_file():
+def upload_file(tobeuploaded):
     # Defining the header for the request
     header = { 'Authorization': douploadkeythings("get") }
 
-    file = {'file': open(args.upload, 'rb')}
+    file = {'file': open(tobeuploaded, 'rb')}
     
-    print(f'Uploading {args.upload}...')
+    print(f'Uploading {tobeuploaded}...')
     upload = requests.post('https://ratted.systems/upload/new', headers=header, files=file)
     if not upload.status_code == 200:
-        print(f'{args.upload} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
+        print(f'{tobeuploaded} has failed to upload. HTTP status code: {upload.status_code}, JSON response: {upload.json()}')
         exit(1)
 
     # Grabbing the link 
     resource = upload.json()["resource"]
     # Checking if the script is being ran through xfce4-screenshooter
-    if not args.upload.startswith('/tmp'):
-        print(f'{args.upload} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panelv2#file-manager.')
+    if not tobeuploaded.startswith('/tmp'):
+        print(f'{tobeuploaded} has been uploaded successfully! \nLink to file: {resource} \nYou can delete the file at https://ratted.systems/upload/panelv2#file-manager.')
         exit(0)
 
     # this requires Zenity
@@ -90,14 +90,14 @@ async def solvePoW(challenge, difficulty):
             nonce+=1
     await findNonce()
                     
-async def uploadwebsocket():
+async def uploadwebsocket(tobeuploaded):
     async def readnextchunk(offset, chunksize):
         global Offset
         # :sob:
         Offset = offset
         global CHUNKSIZE
         CHUNKSIZE = chunksize
-        with open(args.uploadws, "rb") as file:
+        with open(tobeuploaded, "rb") as file:
             SLICE = file.read()[Offset:Offset+CHUNKSIZE]
             file.seek(Offset)
 
@@ -114,13 +114,14 @@ async def uploadwebsocket():
                 pass
 
     
-    filename = re.sub(r'.*?/', '', args.uploadws)
-    filesize = os.path.getsize(args.uploadws)
+    filename = re.sub(r'.*?/', '', tobeuploaded)
+    filesize = os.path.getsize(tobeuploaded)
 
     print("Connecting to ratted.systems over WebSockets...")
     
     # Connecting over WebSockets
     async with websockets.connect('wss://ratted.systems/api/v1/discord/socket') as upload:
+        key = douploadkeythings("get") 
         await upload.send(json.dumps({"op": "auth",
                                       "data": key}))
         auth = await upload.recv()
@@ -179,9 +180,16 @@ async def uploadwebsocket():
 if args.uploadkey:
     douploadkeythings("set")
 elif args.upload:
-    upload_file()
+    with open(args.upload, 'rb') as f:
+        filesize = len(f.read())
+    
+    if int(filesize) > 99*10**6:
+        asyncio.run(uploadwebsocket(args.upload))
+        exit()
+
+    upload_file(args.upload)
 elif args.uploadws:
-    asyncio.run(uploadwebsocket())
+    asyncio.run(uploadwebsocket(args.uploadws))
 
 # Help if no arguments are present
 else:
