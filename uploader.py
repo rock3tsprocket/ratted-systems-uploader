@@ -70,7 +70,7 @@ def upload_file(tobeuploaded):
         exit(0)
 
     # this requires Zenity
-    os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a> (has been copied to clipboard if you installed pyperclip)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
+    os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a>\nDelete: <a href='https://ratted.systems/upload/panelv2#file-manager'>https://ratted.systems/upload/panelv2#file-manager</a>\"")
 
 
 async def uploadwebsocket(tobeuploaded):
@@ -102,7 +102,7 @@ async def uploadwebsocket(tobeuploaded):
             file.seek(Offset)
 
             await upload.send(SLICE)
-            
+
             # i don't think this works
             #print(f"Sent file chunk: {offset}\n")
             #print(f"\033[F\r\033[K{round(offset/filesize)*100}%")
@@ -174,7 +174,12 @@ async def uploadwebsocket(tobeuploaded):
 
         upload_complete = json.loads(await asyncio.wait_for(upload.recv(), 30000))
         await upload.send(json.dumps({"op": "ping", "data": {}}))
-        print(f"File uploaded successfully!\nLink: {upload_complete["data"]["uploadLink"]}\nYou can delete the file at https://ratted.systems/upload/panelv2/#file-manager.")
+        if not tobeuploaded.startswith("/tmp"):
+            print(f"File uploaded successfully!\nLink: {upload_complete["data"]["uploadLink"]}\nYou can delete the file at https://ratted.systems/upload/panelv2/#file-manager.")
+        
+        # this requires Zenity
+        os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{upload_complete["data"]["uploadLink"]}'>{upload_complete["data"]["uploadLink"]}</a>\nDelete: <a href='https://ratted.systems/upload/panelv2#file-manager'>https://ratted.systems/upload/panelv2#file-manager</a>\"")
+
         print(upload_complete) if args.verbose else None
 
 if args.uploadkey:
