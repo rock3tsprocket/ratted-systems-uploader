@@ -10,36 +10,50 @@ import asyncio
 import re
 import hashlib
 from codecs import encode
+from platform import system
 
-# Getting upload key from uploadkey.json
-try:
-    with open(f"{os.path.dirname(os.path.realpath(__file__))}/config.json", "r") as a:
-        global key
-        key = json.loads(a.read().strip())["uploadkey"]
-except FileNotFoundError as oops:
-    print('No upload key found! Please create a file named \'config.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
-    exit(1)
-
-
-# Defining the header for HTTP requests
-header = { 'Authorization': key }
-
+# Getting MOTD
 motd = requests.get('https://ratted.systems/api/v1/upload/motd')
-
-if not key:
-    print('No upload key found! Please create a file named \'uploadkey.json\' and write \'{ "uploadkey": "[your ratted.systems ShareX upload key]"\' in it!')
-    exit(1)
-
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Uploads a file to https://ratted.systems without relying on ShareX or the web client.', epilog=f"Message of the day: {motd.json()['motd']}", add_help=True)
-parser.add_argument('--upload', metavar='[file]', help="Upload a file over HTTPS.")
+parser.add_argument('-U', '--upload', metavar='[file]', help="Upload a file over HTTPS.")
 parser.add_argument('--uploadws', metavar='[file]', help="Upload a file over WebSockets.")
-parser.add_argument('-v', '--verbose', action='store_true')
+parser.add_argument('-v', '--verbose', action='store_true', help="Get verbose output from --uploadws")
+parser.add_argument('--uploadkey', action='store_true', help="Set upload key")
 args = parser.parse_args()
+
+# Upload key
+def douploadkeythings(whattodo):
+    System = system()
+    if System == 'Linux':
+        configfile = f"{os.getenv("XDG_CONFIG_HOME")}/rsu-config.json"
+        if not configfile:
+            configfile = f"{os.getenv('HOME')}/.rsu-config.json"
+    elif System == 'Windows':
+        configfile = f"{os.getenv("APPDATA")}/"
+    elif System == 'Darwin':
+        configfile = f"/Users/{os.getenv("USER")}/.rsu-config.json"
+
+    if whattodo == 'set':
+        print(f"Using {configfile} as configuration file.")
+        print("To see your upload key, go to https://ratted.systems/upload/panelv2#config")
+        key = input("Enter upload key here: ")
+        with open(configfile, 'w') as f:
+            f.write('{ "uploadkey": "'+key+'" }')
+        print(f"Upload key has been written to {configfile}")
+    elif whattodo == 'get':
+        with open(configfile, 'r') as f:
+            key = json.loads(f.read())["uploadkey"]
+            return key
+
+
 
 # Uploading a file
 def upload_file():
+    # Defining the header for the request
+    header = { 'Authorization': douploadkeythings("get") }
+
     file = {'file': open(args.upload, 'rb')}
     
     print(f'Uploading {args.upload}...')
@@ -162,7 +176,9 @@ async def uploadwebsocket():
         print(f"File uploaded successfully!\nLink: {upload_complete["data"]["uploadLink"]}\nYou can delete the file at https://ratted.systems/upload/panelv2/#file-manager.")
         print(upload_complete) if args.verbose else None
 
-if args.upload:
+if args.uploadkey:
+    douploadkeythings("set")
+elif args.upload:
     upload_file()
 elif args.uploadws:
     asyncio.run(uploadwebsocket())
