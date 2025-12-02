@@ -73,24 +73,24 @@ def upload_file(tobeuploaded):
     os.system(f"zenity --info --title=\"Screenshot uploaded\" --text=\"Link: <a href='{resource}'>{resource}</a> (has been copied to clipboard if you installed pyperclip)\nDelete: <a href='https://ratted.systems/upload/panel.list'>https://ratted.systems/upload/panel/list</a>\"")
 
 
-async def solvePoW(challenge, difficulty):
-    nonce = 0
-    TARGET_PREFIX = "0"*difficulty
-    def sha256(theinput):
-        return hashlib.sha256(theinput.encode()).hexdigest()
-
-    async def findNonce():
-        TARGET_PREFIX = "0"*difficulty
-        global nonce
-        nonce = 0
-        while True:
-            HASH = sha256(challenge+str(nonce))
-            if HASH.startswith(TARGET_PREFIX):
-                return nonce
-            nonce+=1
-    await findNonce()
-                    
 async def uploadwebsocket(tobeuploaded):
+    async def solvePoW(challenge, difficulty):
+        nonce = 0
+        TARGET_PREFIX = "0"*difficulty
+        def sha256(theinput):
+            return hashlib.sha256(theinput.encode()).hexdigest()
+
+        async def findNonce():
+            TARGET_PREFIX = "0"*difficulty
+            global nonce
+            nonce = 0
+            while True:
+                HASH = sha256(challenge+str(nonce))
+                if HASH.startswith(TARGET_PREFIX):
+                    return nonce
+                nonce+=1
+        await findNonce()
+
     async def readnextchunk(offset, chunksize):
         global Offset
         # :sob:
